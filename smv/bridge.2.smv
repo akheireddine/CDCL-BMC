@@ -1,0 +1,634 @@
+MODULE main
+  VAR
+    total_time : signed word[32];
+    where_is_torch : signed word[32];
+    on_right : signed word[32];
+    wanna_go : process Ch_1_int;
+    lets_go : process Ch_1_int;
+    p_torch : process torch(self);
+    p_soldier_1 : process soldier_1(self);
+    p_soldier_2 : process soldier_2(self);
+    p_soldier_3 : process soldier_3(self);
+    p_soldier_4 : process soldier_4(self);
+    p_soldier_5 : process soldier_5(self);
+    p_soldier_6 : process soldier_6(self);
+  ASSIGN
+    init(total_time) := swconst(0, 32);
+    init(where_is_torch) := swconst(0, 32);
+    init(on_right) := swconst(0, 32);
+  TRANS
+    !running
+
+MODULE Ch_1_int
+  VAR
+    ele1 : array 0..0 of signed word[32];
+    point : -1..0;
+  ASSIGN
+    init(ele1[0]) := swconst(0, 32);
+    init(point) := 0;
+  TRANS
+    !running
+
+MODULE torch(sup)
+  VAR
+    time1 : signed word[32];
+    time2 : signed word[32];
+    pc : 1..27;
+  ASSIGN
+    init(time1) := swconst(0, 32);
+    init(time2) := swconst(0, 32);
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 2 & sup.wanna_go.point < 0 : swconst(0,32);
+               pc = 5 & sup.wanna_go.point < 0 : swconst(0,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(time1) := 
+            case
+               pc = 2 & sup.wanna_go.point < 0 : sup.wanna_go.ele1[0];
+               pc = 16 : time2;
+               pc = 24 : swconst(0,32);
+               TRUE   : time1;
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 2 & sup.wanna_go.point < 0 : sup.wanna_go.point + 1;
+               pc = 5 & sup.wanna_go.point < 0 : sup.wanna_go.point + 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(time2) := 
+            case
+               pc = 5 & sup.wanna_go.point < 0 : sup.wanna_go.ele1[0];
+               pc = 17 : swconst(0,32);
+               TRUE   : time2;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 10 & sup.lets_go.point = 0 : swconst(0,32);
+               pc = 14 & sup.lets_go.point = 0 : swconst(0,32);
+               pc = 21 & sup.lets_go.point = 0 : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 10 & sup.lets_go.point >= 0 : sup.lets_go.point - 1;
+               pc = 14 & sup.lets_go.point >= 0 : sup.lets_go.point - 1;
+               pc = 21 & sup.lets_go.point >= 0 : sup.lets_go.point - 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.total_time) := 
+            case
+               pc = 23 : sup.total_time + time1;
+               TRUE   : sup.total_time;
+            esac;
+    next(sup.where_is_torch) := 
+            case
+               pc = 25 : swconst(1,32) - sup.where_is_torch;
+               TRUE   : sup.where_is_torch;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.wanna_go.point < 0 & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point < 0 & next(pc) = 5
+             | pc = 4 & next(pc) = 7
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & next(pc) = 8
+             | pc = 7 & next(pc) = 19
+             | pc = 8 & time1 >= time2 & next(pc) = 9
+             | pc = 8 & time1 < time2 & next(pc) = 13
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.lets_go.point >= 0 & next(pc) = 11
+             | pc = 11 & sup.lets_go.point = 0 & next(pc) = 12
+             | pc = 12 & next(pc) = 19
+             | pc = 13 & next(pc) = 14
+             | pc = 14 & sup.lets_go.point >= 0 & next(pc) = 15
+             | pc = 15 & sup.lets_go.point = 0 & next(pc) = 16
+             | pc = 16 & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 19
+             | pc = 19 & sup.total_time + time1 <= swconst(140,32) & next(pc) = 20
+             | pc = 20 & next(pc) = 21
+             | pc = 21 & sup.lets_go.point >= 0 & next(pc) = 22
+             | pc = 22 & sup.lets_go.point = 0 & next(pc) = 23
+             | pc = 23 & next(pc) = 24
+             | pc = 24 & next(pc) = 25
+             | pc = 25 & next(pc) = 26
+             | pc = 26 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 5
+      | pc = 7
+      | pc = 9
+      | pc = 10 & sup.lets_go.point >= 0
+      | pc = 11 & sup.lets_go.point = 0
+      | pc = 13
+      | pc = 14 & sup.lets_go.point >= 0
+      | pc = 15 & sup.lets_go.point = 0
+      | pc = 16
+      | pc = 17
+      | pc = 20
+      | pc = 21 & sup.lets_go.point >= 0
+      | pc = 22 & sup.lets_go.point = 0
+      | pc = 23
+      | pc = 24
+      | pc = 25
+       -> running )
+    & ( pc = 1 & sup.wanna_go.point >= 0
+      | pc = 8 & !(time1 < time2 | time1 >= time2)
+      | pc = 10 & sup.lets_go.point < 0
+      | pc = 11 & sup.lets_go.point != 0
+      | pc = 14 & sup.lets_go.point < 0
+      | pc = 15 & sup.lets_go.point != 0
+      | pc = 19 & sup.total_time + time1 > swconst(140,32)
+      | pc = 21 & sup.lets_go.point < 0
+      | pc = 22 & sup.lets_go.point != 0
+      | pc = 27
+       -> !running )
+
+
+MODULE soldier_1(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(5,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(5,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+MODULE soldier_2(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(10,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(10,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+MODULE soldier_3(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(20,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(20,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+MODULE soldier_4(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(25,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(25,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+MODULE soldier_5(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(30,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(30,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+MODULE soldier_6(sup)
+  VAR
+    pc : 1..19;
+  ASSIGN
+    init(pc) := 1;
+    next(sup.wanna_go.ele1[0]) := 
+            case
+               pc = 3 & sup.wanna_go.point = 0 : swconst(30,32);
+               pc = 12 & sup.wanna_go.point = 0 : swconst(30,32);
+               TRUE   : sup.wanna_go.ele1[0];
+            esac;
+    next(sup.wanna_go.point) := 
+            case
+               pc = 3 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               pc = 12 & sup.wanna_go.point >= 0 : sup.wanna_go.point - 1;
+               TRUE   : sup.wanna_go.point;
+            esac;
+    next(sup.lets_go.ele1[0]) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : swconst(0,32);
+               TRUE   : sup.lets_go.ele1[0];
+            esac;
+    next(sup.lets_go.point) := 
+            case
+               pc = 7 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               pc = 17 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] : sup.lets_go.point + 1;
+               TRUE   : sup.lets_go.point;
+            esac;
+    next(sup.on_right) := 
+            case
+               pc = 8 : sup.on_right + swconst(1,32);
+               pc = 14 : sup.on_right - swconst(1,32);
+               TRUE   : sup.on_right;
+            esac;
+  TRANS
+      ( running & (
+               pc = 1 & sup.where_is_torch = swconst(0,32) & next(pc) = 2
+             | pc = 2 & next(pc) = 3
+             | pc = 3 & sup.wanna_go.point >= 0 & next(pc) = 4
+             | pc = 4 & sup.wanna_go.point = 0 & next(pc) = 5
+             | pc = 5 & next(pc) = 6
+             | pc = 6 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 7
+             | pc = 7 & next(pc) = 8
+             | pc = 8 & next(pc) = 9
+             | pc = 9 & next(pc) = 10
+             | pc = 10 & sup.where_is_torch = swconst(1,32) & next(pc) = 11
+             | pc = 11 & next(pc) = 12
+             | pc = 12 & sup.wanna_go.point >= 0 & next(pc) = 13
+             | pc = 13 & sup.wanna_go.point = 0 & next(pc) = 14
+             | pc = 14 & next(pc) = 15
+             | pc = 15 & next(pc) = 16
+             | pc = 16 & sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0] & next(pc) = 17
+             | pc = 17 & next(pc) = 18
+             | pc = 18 & next(pc) = 1
+             )
+      | !running & next(pc) = pc )
+    & ( pc = 2
+      | pc = 3 & sup.wanna_go.point >= 0
+      | pc = 4 & sup.wanna_go.point = 0
+      | pc = 7
+      | pc = 8
+      | pc = 11
+      | pc = 12 & sup.wanna_go.point >= 0
+      | pc = 13 & sup.wanna_go.point = 0
+      | pc = 14
+      | pc = 17
+       -> running )
+    & ( pc = 1 & sup.where_is_torch != swconst(0,32)
+      | pc = 3 & sup.wanna_go.point < 0
+      | pc = 4 & sup.wanna_go.point != 0
+      | pc = 6 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 10 & sup.where_is_torch != swconst(1,32)
+      | pc = 12 & sup.wanna_go.point < 0
+      | pc = 13 & sup.wanna_go.point != 0
+      | pc = 16 & !(sup.lets_go.point < 0 & swconst(0,32) = sup.lets_go.ele1[0])
+      | pc = 19
+       -> !running )
+
+
+
+LTLSPEC F ( sup.on_right = swconst(6,32) )
